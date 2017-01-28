@@ -10,6 +10,8 @@ import Preprocess
 import DetectChars
 import PossiblePlate
 import PossibleChar
+import color
+
 
 # module level variables ##########################################################################
 PLATE_WIDTH_PADDING_FACTOR = 1.3
@@ -53,7 +55,7 @@ def detectPlatesInScene(imgOriginalScene):
             contours.append(possibleChar.contour)
         # end for
 
-        cv2.drawContours(imgContours, contours, -1, Main.SCALAR_WHITE)
+        cv2.drawContours(imgContours, contours, -1, color.WHITE)
         cv2.imshow("2b imgContours", imgContours)
     # end if # show steps #########################################################################
 
@@ -100,10 +102,10 @@ def detectPlatesInScene(imgOriginalScene):
         for i in range(0, len(listOfPossiblePlates)):
             p2fRectPoints = cv2.boxPoints(listOfPossiblePlates[i].rrLocationOfPlateInScene)
 
-            cv2.line(imgContours, tuple(p2fRectPoints[0]), tuple(p2fRectPoints[1]), Main.SCALAR_RED, 2)
-            cv2.line(imgContours, tuple(p2fRectPoints[1]), tuple(p2fRectPoints[2]), Main.SCALAR_RED, 2)
-            cv2.line(imgContours, tuple(p2fRectPoints[2]), tuple(p2fRectPoints[3]), Main.SCALAR_RED, 2)
-            cv2.line(imgContours, tuple(p2fRectPoints[3]), tuple(p2fRectPoints[0]), Main.SCALAR_RED, 2)
+            cv2.line(imgContours, tuple(p2fRectPoints[0]), tuple(p2fRectPoints[1]), color.RED, 2)
+            cv2.line(imgContours, tuple(p2fRectPoints[1]), tuple(p2fRectPoints[2]), color.RED, 2)
+            cv2.line(imgContours, tuple(p2fRectPoints[2]), tuple(p2fRectPoints[3]), color.RED, 2)
+            cv2.line(imgContours, tuple(p2fRectPoints[3]), tuple(p2fRectPoints[0]), color.RED, 2)
 
             cv2.imshow("4a", imgContours)
 
@@ -136,7 +138,7 @@ def findPossibleCharsInScene(imgThresh):
     for i in range(0, len(contours)):                       # for each contour
 
         if Main.showSteps == True: # show steps ###################################################
-            cv2.drawContours(imgContours, contours, i, Main.SCALAR_WHITE)
+            cv2.drawContours(imgContours, contours, i, color.WHITE)
         # end if # show steps #####################################################################
 
         possibleChar = PossibleChar.PossibleChar(contours[i])

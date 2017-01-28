@@ -8,7 +8,7 @@ import random
 import Main
 import Preprocess
 import PossibleChar
-
+import color
 from Net import kNearest
 
 
@@ -85,7 +85,7 @@ def detectCharsInPlates(listOfPossiblePlates):
                 contours.append(possibleChar.contour)
             # end for
 
-            cv2.drawContours(imgContours, contours, -1, Main.SCALAR_WHITE)
+            cv2.drawContours(imgContours, contours, -1, color.WHITE)
 
             cv2.imshow("6", imgContours)
         # end if # show steps #####################################################################
@@ -172,7 +172,7 @@ def detectCharsInPlates(listOfPossiblePlates):
                 contours.append(matchingChar.contour)
             # end for
 
-            cv2.drawContours(imgContours, contours, -1, Main.SCALAR_WHITE)
+            cv2.drawContours(imgContours, contours, -1, color.WHITE)
 
             cv2.imshow("9", imgContours)
         # end if # show steps #####################################################################
@@ -371,7 +371,7 @@ def recognizeCharsInPlate(imgThresh, listOfMatchingChars):
     for currentChar in listOfMatchingChars:                                         # for each char in plate
         pt1 = (currentChar.intBoundingRectX, currentChar.intBoundingRectY)
         pt2 = ((currentChar.intBoundingRectX + currentChar.intBoundingRectWidth), (currentChar.intBoundingRectY + currentChar.intBoundingRectHeight))
-        cv2.rectangle(imgThreshColor, pt1, pt2, Main.SCALAR_GREEN, 2)           # draw green box around the char
+        cv2.rectangle(imgThreshColor, pt1, pt2, color.GREEN, 2)           # draw green box around the char
                 # crop char out of threshold image
         imgROI = imgThresh[currentChar.intBoundingRectY : currentChar.intBoundingRectY + currentChar.intBoundingRectHeight,
                            currentChar.intBoundingRectX : currentChar.intBoundingRectX + currentChar.intBoundingRectWidth]

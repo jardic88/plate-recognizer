@@ -14,17 +14,33 @@ showSteps = False
 MIN_PLATE_CHARS = 6
 
 
-def openVideo(path, since):
+
+def openVideo(path, sinceFrameNumber = 0, crop = 2.5):
 	cap = cv2.VideoCapture(path)
 	i = 0
+
+	width = 0
+	heightCropPoint = 0 
+	height = 0
+
 	while(cap.isOpened()):
 		i = i + 1
 		ret, frame = cap.read()
-		if i < since:
+		if frame is None:
+			break
+		if i == 1 and crop > 0:
+			height, width, x = frame.shape
+			heightCropPoint = height - int(height / crop)
+		# zacni az od 'sinceFrameNumber' casu
+		if i < sinceFrameNumber:
 			continue
-		if i % 5 == 0:
-			if frame is not None:
-				processFrame(frame)
+		# vem jen kazdy druhy snimek
+		if i % 2 == 0:
+			# orezat frame
+			if crop > 0:
+				frame = frame[heightCropPoint : height, 0 : width]
+			# zpracovat frame
+			processFrame(frame)
 		if cv2.waitKey(1) & 0xFF == ord('q'):
 			break
 
@@ -39,19 +55,19 @@ def openImage(path):
 
 
 def processFrame(frame):
+
 	possiblePlates = DetectPlates.detectPlatesInScene(frame)
 	possiblePlates = DetectChars.detectCharsInPlates(possiblePlates)
 
 	platesFound = len(possiblePlates)
-	print "plates: " + str(platesFound)
+	#print("plates: " + str(platesFound))
 	for plate in possiblePlates:
 		if len(plate.text) > MIN_PLATE_CHARS:
 			print('PLATE: ' + plate.text)
 			drawRedRectangleAroundPlate(frame, plate)
 			writeLicensePlateCharsOnImage(frame, plate)
-			cv2.imshow('plateCrop', plate.plateCrop)
-			cv2.imshow('frameThresh', plate.frameThresh)
-			cv2.imshow('imgContours', plate.imgContours)
+			#cv2.imshow('plateCrop', plate.plateCrop)
+			#cv2.imshow('frameThresh', plate.frameThresh)
 			#cv2.imwrite("../plateCrop.png", plate.plateCrop)
 
 	cv2.imshow('frame', frame)
@@ -64,9 +80,11 @@ def main():
 		print "error: KNN traning was not successful"
 		return
 
-	#openVideo('../fotky/1_0002.avi', 170)
-	#openVideo('../../../../../../1.avi', 900)
-	openImage('../fotky/orez.png')
+	#openVideo('../fotky/1_0002.avi', 2.5, 170)
+	#openVideo('../fotky/1_0002.avi', 170, 4)
+	openVideo('../../../../../../1.avi', 900)
+	#openVideo('../../../../../../1.avi', 1700)
+	#openImage('../fotky/orez.png')
 
 	# hold windows open until user presses a key
 	cv2.waitKey()

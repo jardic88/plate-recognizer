@@ -42,13 +42,13 @@ def detectCharsInPlates(possiblePlates):
 	# at this point we can be sure the list of possible plates has at least one plate
 
 	for plate in possiblePlates:
-		plate.cropUpscaled = cv2.resize(plate.plateCrop, (0, 0), fx = 2, fy = 2)
-		plate.frameThresh = filter.threshold(plate.cropUpscaled)
+		plate.plateUpscaled = cv2.resize(plate.plateCrop, (0, 0), fx = 2, fy = 2)
+		plate.plateThresh = filter.threshold(plate.plateUpscaled)
 
 		# increase size of plate image for easier viewing and char detection
-		#plate.frameThresh = cv2.resize(plate.frameThresh, (0, 0), fx = 3, fy = 3)
+		#plate.plateThresh = cv2.resize(plate.plateThresh, (0, 0), fx = 3, fy = 3)
 		# threshold again to eliminate any gray areas
-		#thresholdValue, plate.frameThresh = cv2.threshold(plate.frameThresh, 0.0, 255.0, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+		#thresholdValue, plate.plateThresh = cv2.threshold(plate.plateThresh, 0.0, 255.0, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
 
 		# find all possible chars in the plate,
 		# this function first finds all contours, then only includes contours that could be chars (without comparison to other chars yet)
@@ -56,47 +56,48 @@ def detectCharsInPlates(possiblePlates):
 
 		# given a list of all possible chars, find groups of matching chars within the plate
 		matchingCharsInPlate = findListOfListsOfMatchingChars(possibleCharsInPlate)
+		matchingCharsInPlateLength = len(matchingCharsInPlate)
 
 		# if no groups of matching chars were found in the plate
-		if (len(matchingCharsInPlate) == 0):
+		if (matchingCharsInPlateLength == 0):
 			plate.text = ""
 			possiblePlates.remove(plate)
 			continue
 
-		for i in range(0, len(matchingCharsInPlate)):                              # within each list of matching chars
-			matchingCharsInPlate[i].sort(key = lambda char: char.centerX)        # sort chars from left to right
-			matchingCharsInPlate[i] = filterOverlappingChars(matchingCharsInPlate[i])              # and remove inner overlapping chars
+		# within each list of matching chars
+		for i in range(0, matchingCharsInPlateLength):
+			# sort chars from left to right
+			matchingCharsInPlate[i].sort(key = lambda char: char.centerX)
+			# and remove inner overlapping chars
+			matchingCharsInPlate[i] = filterOverlappingChars(matchingCharsInPlate[i])
 
 		# within each possible plate, suppose the longest list of potential matching chars is the actual list of chars
-		intLenOfLongestListOfChars = 0
-		intIndexOfLongestListOfChars = 0
+		lengthOfLongestList = 0
+		indexOfLongestList = 0
 
 		# loop through all the vectors of matching chars, get the index of the one with the most chars
-		for i in range(0, len(matchingCharsInPlate)):
-			if len(matchingCharsInPlate[i]) > intLenOfLongestListOfChars:
-				intLenOfLongestListOfChars = len(matchingCharsInPlate[i])
-				intIndexOfLongestListOfChars = i
+		for i in range(0, matchingCharsInPlateLength):
+			if len(matchingCharsInPlate[i]) > lengthOfLongestList:
+				lengthOfLongestList = len(matchingCharsInPlate[i])
+				indexOfLongestList = i
 
 		# suppose that the longest list of matching chars within the plate is the actual list of chars
-		longestMatchingCharsInPlate = matchingCharsInPlate[intIndexOfLongestListOfChars]
-		plate.text = recognizeTextInPlate(plate.frameThresh, longestMatchingCharsInPlate)
+		longestMatchingCharsInPlate = matchingCharsInPlate[indexOfLongestList]
+		plate.text = recognizeTextInPlate(plate, longestMatchingCharsInPlate)
 
 	return possiblePlates
 
 
 
 def findPossibleCharsInPlate(plate):
-	frameThresh = plate.frameThresh
+	plateThresh = plate.plateThresh
 	possibleChars = []
 	#contours = []
-	frameThreshCopy = frameThresh.copy()
+	plateThreshCopy = plateThresh.copy()
 	# find all contours in plate
 
-	height, width = frameThresh.shape
-	imgContours = np.zeros((height, width, 3), np.uint8)
-
-	imgContours, contours, npaHierarchy = cv2.findContours(frameThreshCopy, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-	plate.imgContours = imgContours
+	height, width = plateThresh.shape
+	imgContours, contours, npaHierarchy = cv2.findContours(plateThreshCopy, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 	for contour in contours:
 		char = PlateChar(contour)
 		# if contour is a possible char, note this does not compare to other chars (yet) . . .
@@ -127,7 +128,6 @@ def findListOfListsOfMatchingChars(possibleChars):
 
 		# if we get here, the current list passed test as a "group" or "cluster" of matching chars
 		listOfListsOfMatchingChars.append(matchingChars)      # so add to our list of lists of matching chars
-		possibleCharsWithCurrentMatchesRemoved = []
 		# remove the current list of matching chars from the big list so we don't use those same chars twice,
 		# make sure to make a new big list for this since we don't want to change the original big list
 		possibleCharsWithCurrentMatchesRemoved = list(set(possibleChars) - set(matchingChars))
@@ -227,15 +227,20 @@ def filterOverlappingChars(matchingChars):
 
 
 # this is where we apply the actual char recognition
-def recognizeTextInPlate(frameThresh, matchingChars):
+def recognizeTextInPlate(plate, matchingChars):
+	plateThresh = plate.plateThresh
+	plateUpscaled = plate.plateUpscaled
 	text = ""
-
+	#i = 0
 	# for each char in plate
 	for char in matchingChars:
+		#i = i + 1
 		# crop char out of threshold image
 		x = char.x
 		y = char.y
-		charCrop = frameThresh[y : y + char.height, x : x + char.width]
+		charCrop = plateThresh[y : y + char.height, x : x + char.width]
+		#charCrop2 = plateUpscaled[y : y + char.height, x : x + char.width]
+		#cv2.imshow('plateUpscaled' + str(i), charCrop2)
 
 		# resize image, this is necessary for char recognition
 		charCrop = cv2.resize(charCrop, (TARGET_CHAR_WIDTH, TARGET_CHAR_HEIGHT))
